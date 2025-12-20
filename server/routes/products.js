@@ -5,10 +5,7 @@ const admin = require("../middleware/admin");
 
 const router = express.Router();
 
-/**
- * @route   POST /api/products
- * @desc    Add new product (Admin only)
- */
+// Add new Product
 router.post("/", auth, admin, async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -19,10 +16,7 @@ router.post("/", auth, admin, async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/products
- * @desc    Get all products
- */
+// Get all Products
 router.get("/", async (req, res) => {
   try {
     const products = await Product.find();
@@ -32,10 +26,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/products/:id
- * @desc    Get single product
- */
+// Get Product by ID
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -48,10 +39,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/**
- * @route   PATCH /api/products/:id
- * @desc    Update product details (Admin only)
- */
+// Update Product (Admin)
 router.patch("/:id", auth, admin, async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -71,10 +59,7 @@ router.patch("/:id", auth, admin, async (req, res) => {
 });
 
 
-/**
- * @route   DELETE /api/products/:id
- * @desc    Delete product (Admin only)
- */
+// Delete Product (Admin)
 router.delete("/:id", auth, admin, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);

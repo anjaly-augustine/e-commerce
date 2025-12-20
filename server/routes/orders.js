@@ -6,10 +6,7 @@ const admin = require("../middleware/admin");
 
 const router = express.Router();
 
-/**
- * @route   POST /api/orders
- * @desc    Place an order (User)
- */
+// Place a new order
 router.post("/", auth, async (req, res) => {
   try {
     const { items, totalAmount } = req.body;
@@ -18,7 +15,7 @@ router.post("/", auth, async (req, res) => {
       return res.status(400).json({ message: "No items in order" });
     }
 
-    // Optional: reduce stock
+    
     for (const item of items) {
       await Product.findByIdAndUpdate(item.productId, {
         $inc: { stock: -item.quantity }
@@ -38,10 +35,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/orders/my
- * @desc    Get logged-in user's orders
- */
+// Get orders for logged-in user
 router.get("/my", auth, async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.user.id }).populate(
@@ -54,10 +48,7 @@ router.get("/my", auth, async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/orders
- * @desc    Get all orders (Admin)
- */
+// Get all orders (Admin)
 router.get("/", auth, admin, async (req, res) => {
   try {
     const orders = await Order.find()
@@ -69,10 +60,7 @@ router.get("/", auth, admin, async (req, res) => {
   }
 });
 
-/**
- * @route   PATCH /api/orders/:id
- * @desc    Update order status (Admin)
- */
+// Update order status (Admin)
 router.patch("/:id", auth, admin, async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(
