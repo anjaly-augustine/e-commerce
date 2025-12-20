@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const orderRoutes = require('./routes/orders');
 
 dotenv.config();
 
@@ -10,9 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-// app.use("/api/auth", require("./routes/auth"));
-// app.use("/api/products", require("./routes/products"));
-// app.use("/api/orders", require("./routes/orders"));
+app.use('/auth', authRoutes);
+app.use('/products', productRoutes);
+app.use('/orders', orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Shoe E-commerce API Running");
