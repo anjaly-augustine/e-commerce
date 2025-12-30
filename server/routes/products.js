@@ -69,4 +69,52 @@ router.delete("/:id", auth, admin, async (req, res) => {
   }
 });
 
+// @route   POST /api/products/:id/reviews
+// @desc    Create a new review
+router.post("/:id/reviews", auth, async (req, res) => {
+  const { rating, comment } = req.body;
+
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // 1. Check if user already reviewed
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.userId.toString() === req.user.id.toString()
+    );
+
+    if (alreadyReviewed) {
+      return res.status(400).json({ message: "Product already reviewed" });
+    }
+
+    // 2. Create the review object
+    // If your auth middleware doesn't have 'name', use a fallback or 
+    // fetch the user: const user = await User.findById(req.user.id);
+    const review = {
+      userId: req.user.id,
+      name: req.user.name || "Anonymous User", // Fallback if name is missing
+      rating: Number(rating),
+      comment: comment,
+    };
+
+    product.reviews.push(review);
+
+    // 3. Update stats
+    product.numReviews = product.reviews.length;
+    product.rating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+    res.status(201).json({ message: "Review added successfully" });
+    
+  } catch (error) {
+    console.error(error); // THIS WILL SHOW THE REAL ERROR IN YOUR TERMINAL
+    res.status(500).json({ message: error.message || "Failed to add review" });
+  }
+});
+
 module.exports = router;

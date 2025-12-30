@@ -3,37 +3,67 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
+const Cart = require("../models/Cart");
 
 const router = express.Router();
 
 // Place a new order
-router.post("/", auth, async (req, res) => {
+router.post("/checkout", auth, async (req, res) => {
   try {
-    const { items, totalAmount } = req.body;
+    // 1. Find the user's cart and populate product details to get current prices
+    const cart = await Cart.findOne({ userId: req.user.id }).populate("items.productId");
 
-    if (!items || items.length === 0) {
-      return res.status(400).json({ message: "No items in order" });
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Your cart is empty" });
     }
 
-    
-    for (const item of items) {
-      await Product.findByIdAndUpdate(item.productId, {
+    // 2. Calculate total amount and verify stock
+    let totalAmount = 0;
+    const orderItems = [];
+
+    for (const item of cart.items) {
+      const product = item.productId;
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ message: `Not enough stock for ${product.name}` });
+      }
+
+      totalAmount += product.price * item.quantity;
+      
+      orderItems.push({
+        productId: product._id,
+        quantity: item.quantity
+      });
+    }
+
+    // 3. Update Product Stock (Decrement)
+    for (const item of cart.items) {
+      await Product.findByIdAndUpdate(item.productId._id, {
         $inc: { stock: -item.quantity }
       });
     }
 
+    // 4. Create the Order
     const order = new Order({
       userId: req.user.id,
-      items,
-      totalAmount
+      items: orderItems,
+      totalAmount: totalAmount,
+      status: "pending"
     });
 
     await order.save();
-    res.status(201).json(order);
+
+    // 5. CLEAR THE CART after successful order
+    await Cart.findOneAndDelete({ userId: req.user.id });
+
+    res.status(201).json({ message: "Order placed successfully", order });
   } catch (error) {
-    res.status(500).json({ message: "Failed to place order" });
+    console.error(error);
+    res.status(500).json({ message: "Failed to process checkout" });
   }
 });
+
+
 
 // Get orders for logged-in user
 router.get("/my", auth, async (req, res) => {
