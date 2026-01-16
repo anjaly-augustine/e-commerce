@@ -11,8 +11,15 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@uploadcare/react-uploader": "^1.11.2",
+    "axios": "^1.13.2",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.12.0",
+    "sweetalert2": "^11.26.17",
+    "sweetalert2-react-content": "^5.1.1",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

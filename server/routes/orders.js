@@ -29,7 +29,7 @@ router.post("/checkout", auth, async (req, res) => {
       }
 
       totalAmount += product.price * item.quantity;
-      
+
       orderItems.push({
         productId: product._id,
         quantity: item.quantity
@@ -70,7 +70,7 @@ router.get("/my", auth, async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.user.id }).populate(
       "items.productId",
-      "name price"
+      "name price images"
     );
     res.json(orders);
   } catch (error) {

@@ -54,33 +54,38 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.patch('/me', verifyToken, async (req, res) => {
    try {
       const { name, email, phone, oldPassword, newPassword } = req.body;
-
       const user = await User.findById(req.user.id).select('+password');
+
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      // Update normal fields
+      // --- PART 1: UPDATE BASIC INFO ---
+      // These fields update if they exist in the request, regardless of password
       if (name) user.name = name;
       if (email) user.email = email;
       if (phone) user.phone = phone;
 
-      // Update password if requested
-      if (oldPassword && newPassword) {
+      // --- PART 2: OPTIONAL PASSWORD UPDATE ---
+      // We ONLY enter this logic if both password fields are provided and not empty
+      if (oldPassword && newPassword && oldPassword.trim() !== "" && newPassword.trim() !== "") {
          const isMatch = await bcrypt.compare(oldPassword, user.password);
          if (!isMatch) {
             return res.status(400).json({ message: "Old password is incorrect" });
          }
-         const hashedPassword = await bcrypt.hash(newPassword, 10);
-         user.password = hashedPassword;
-      } else if (oldPassword || newPassword) {
-         return res.status(400).json({ message: "Provide both oldPassword and newPassword to update password" });
+         user.password = await bcrypt.hash(newPassword, 10);
+      } 
+      // If the user tried to fill just one password field, send a warning
+      else if (oldPassword || newPassword) {
+         if (oldPassword !== "" || newPassword !== "") {
+             return res.status(400).json({ message: "Both old and new passwords are required to change password" });
+         }
       }
 
       await user.save();
 
       const userObj = user.toObject();
-      delete userObj.password; // remove password from response
-
+      delete userObj.password; 
       return res.status(200).json({ message: "User updated successfully", data: userObj });
+
    } catch (error) {
       return res.status(500).json({ message: error.message });
    }

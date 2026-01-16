@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+@theme {
+  /* Defining custom deep-dark shades */
+  --color-obsidian-bg: #0c0a09;    /* Stone 950 */
+  --color-obsidian-card: #171717;  /* Deep neutral */
+  --color-obsidian-border: #262626;
+}
+
+/* Enable class-based dark mode for Tailwind v4 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Force class-based dark mode (this is key!) */
+@variant dark (&:where(.dark, .dark *));
+
+/* Global Dark Mode override for the body */
+.dark body {
+  background-color: var(--color-obsidian-bg);
+  color: #f5f5f5;
+}
+
+.dark {
+  color-scheme: dark;
+}

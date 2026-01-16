@@ -1,35 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { ThemeProvider, useTheme } from "./context/ThemeContext"; // Path to the context we created
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Cart from "./pages/CartPage";
+import Profile from "./pages/Profile";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import AdminDashboard from "./pages/AdminDashboard";
 
+// We create a wrapper component to access the theme state inside the Router
+const AppContent = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { theme } = useTheme(); // Access the current theme (light or dark)
 
-function App() {
-  const [count, setCount] = useState(0)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('http://localhost:3000/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.data) setUser(result.data);
+        })
+        .catch(() => setUser(null))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading) return null;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    // This div ensures the "Ultra Dark" background covers the entire viewport
+    <div className="min-h-screen transition-colors duration-500 bg-white dark:bg-[#0c0a09] text-stone-900 dark:text-stone-100">
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetails />} />
+
+          {/* User Protected Routes */}
+          <Route path="/cart" element={user ? <Cart /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/checkout" element={user ? <Checkout /> : <Navigate to="/login" />} />
+          <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" />} />
+
+          {/* Admin ONLY Route */}
+          <Route
+            path="/admin"
+            element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />}
+          />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

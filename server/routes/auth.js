@@ -7,22 +7,24 @@ const router = express.Router();
 
 // Register User
 
+// router.post("/register", ...)
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { fullName, email, password, role } = req.body;
 
-    
+    // 1. Check if user already exists
     const existingUser = await User.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
+    }
 
-    
+    // 2. Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    
+    // 3. Create and Save the user
     const user = new User({
-      name,
+      name: fullName,
       email,
       password: hashedPassword,
       role: role || "user"
@@ -30,12 +32,31 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    // 4. GENERATE JWT TOKEN (Auto-login logic)
+    // This payload matches your login route for consistency
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // 5. Send back the token and user info
+    res.status(201).json({ 
+      message: "User registered successfully", 
+      token, 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Registration Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
 // Login User
 router.post("/login", async (req, res) => {
   try {
