@@ -7,6 +7,7 @@ import AdminNav from '../components/admin/AdminNav';
 import { OrderTable, UserTable, ProductTable } from '../components/admin/AdminTables';
 import ProductModal from '../components/admin/ProductModal';
 import { Loader2, Plus } from 'lucide-react';
+import api from '../services/api';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('orders');
@@ -25,14 +26,21 @@ const AdminDashboard = () => {
     const fetchData = async () => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
-        const endpoint = activeTab === 'users' ? 'users' : activeTab === 'orders' ? 'orders' : 'products';
+        const endpoint =
+            activeTab === 'users'
+                ? 'users'
+                : activeTab === 'orders'
+                    ? 'orders'
+                    : 'products';
 
         try {
-            const response = await fetch(`http://localhost:3000/${endpoint}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+            const { data } = await api.get(`/${endpoint}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
-            const result = await response.json();
-            const fetchedData = result.data || result;
+
+            const fetchedData = data.data || data;
             setData(Array.isArray(fetchedData) ? fetchedData : []);
         } catch (err) {
             toast.error(`Failed to fetch ${activeTab}`);
@@ -40,6 +48,7 @@ const AdminDashboard = () => {
             setIsLoading(false);
         }
     };
+
 
     const confirmDelete = (title, onConfirm) => {
         Swal.fire({
@@ -61,15 +70,16 @@ const AdminDashboard = () => {
     const handleDelete = async (id) => {
         const token = localStorage.getItem('token');
         const endpoint = activeTab === 'users' ? 'users' : 'products';
+
         try {
-            const response = await fetch(`http://localhost:3000/${endpoint}/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await api.delete(`/${endpoint}/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
-            if (response.ok) {
-                toast.success(`${activeTab.slice(0, -1)} deleted`);
-                fetchData();
-            }
+
+            toast.success(`${activeTab.slice(0, -1)} deleted`);
+            fetchData();
         } catch (err) {
             toast.error('Deletion failed');
         }
@@ -77,19 +87,20 @@ const AdminDashboard = () => {
 
     const handleStatusUpdate = async (orderId, newStatus) => {
         const token = localStorage.getItem('token');
+
         try {
-            const response = await fetch(`http://localhost:3000/orders/${orderId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-            if (response.ok) {
-                toast.success('Status updated');
-                fetchData();
-            }
+            await api.patch(
+                `/orders/${orderId}`,
+                { status: newStatus },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            toast.success('Status updated');
+            fetchData();
         } catch (err) {
             toast.error('Update failed');
         }
@@ -97,6 +108,7 @@ const AdminDashboard = () => {
 
     const handleProductSubmit = async () => {
         const token = localStorage.getItem('token');
+
         const productData = {
             ...productForm,
             price: Number(productForm.price),
@@ -107,28 +119,36 @@ const AdminDashboard = () => {
         };
 
         try {
-            const url = editingProduct
-                ? `http://localhost:3000/products/${editingProduct._id}`
-                : 'http://localhost:3000/products';
-
-            const response = await fetch(url, {
-                method: editingProduct ? 'PATCH' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(productData)
-            });
-
-            if (response.ok) {
-                toast.success(editingProduct ? 'Product updated' : 'Product added');
-                setShowProductModal(false);
-                fetchData();
+            if (editingProduct) {
+                await api.patch(
+                    `/products/${editingProduct._id}`,
+                    productData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+            } else {
+                await api.post(
+                    `/products`,
+                    productData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
             }
+
+            toast.success(editingProduct ? 'Product updated' : 'Product added');
+            setShowProductModal(false);
+            fetchData();
         } catch (err) {
             toast.error('Save failed');
         }
     };
+
 
     const openEditModal = (product) => {
         setEditingProduct(product);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import api from '../services/api';
 
 
 const Login = () => {
@@ -21,31 +22,21 @@ const Login = () => {
         setError(null);
 
         try {
-            const response = await fetch('http://localhost:3000/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
+            const { data } = await api.post('/auth/login', formData);
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
-            }
-
-            // Handle successful login (e.g., store token in localStorage)
             localStorage.setItem('token', data.token);
-            window.location.href = '/'; // Redirect to home
+            window.location.href = '/';
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || 'Login failed');
         } finally {
             setIsLoading(false);
         }
     };
 
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-['Roboto',sans-serif]">
-            
+
 
             <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="w-full max-w-md">
@@ -116,7 +107,7 @@ const Login = () => {
                                 </div>
                             </div>
 
-                           
+
 
                             {/* Sign In Button */}
                             <button
@@ -150,7 +141,7 @@ const Login = () => {
                 </div>
             </main>
 
-            
+
         </div>
     );
 };

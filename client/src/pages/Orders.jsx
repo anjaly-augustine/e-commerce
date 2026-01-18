@@ -3,6 +3,7 @@ import { Package, Clock, CheckCircle2, Truck, ChevronRight, Loader2, ShoppingBag
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -10,22 +11,20 @@ const Orders = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            const token = localStorage.getItem('token');
-            try {
-                const response = await fetch('http://localhost:3000/orders/my', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                setOrders(data);
-            } catch (err) {
-                console.error("Failed to fetch orders");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchOrders();
-    }, []);
+    const fetchOrders = async () => {
+        try {
+            const response = await api.get('/orders/my');
+            setOrders(response.data);
+        } catch (err) {
+            console.error("Failed to fetch orders", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchOrders();
+}, []);
+
 
     const getStatusStyle = (status) => {
         const currentStatus = status ? status.toLowerCase() : 'pending';

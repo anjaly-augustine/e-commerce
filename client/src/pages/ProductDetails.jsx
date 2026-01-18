@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ShoppingCart, Loader2, Heart, Share2, Plus, Minus, Check } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import api from '../services/api';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -11,7 +12,7 @@ const ProductDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSize, setSelectedSize] = useState('M');
-  
+
   // Cart-specific states
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -21,10 +22,9 @@ const ProductDetails = () => {
     const fetchProductDetails = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:3000/products/${id}`);
-        if (!response.ok) throw new Error('Product not found');
-        const data = await response.json();
-        setProduct(data);
+        const response = await api.get(`/products/${id}`);
+        setProduct(response.data);
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -39,7 +39,7 @@ const ProductDetails = () => {
   // --- ADD TO CART HANDLER ---
   const handleAddToCart = async () => {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
       alert("Please sign in to add items to your cart.");
       navigate('/login');
@@ -48,17 +48,11 @@ const ProductDetails = () => {
 
     setIsAdding(true);
     try {
-      const response = await fetch('http://localhost:3000/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          productId: id,
-          quantity: quantity
-        }),
+      await api.post('/cart', {
+        productId: id,
+        quantity: quantity
       });
+
 
       if (response.ok) {
         setAddSuccess(true);
@@ -86,13 +80,13 @@ const ProductDetails = () => {
       <Navbar />
       <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          
+
           {/* Image Section */}
           <div className="bg-stone-100 dark:bg-stone-900 rounded-3xl overflow-hidden aspect-square flex items-center justify-center p-12 transition-colors duration-300">
-            <img 
-              className="w-full h-full object-contain hover:scale-105 transition-transform duration-500" 
-              src={product?.images || "https://placehold.co/600"} 
-              alt={product?.name} 
+            <img
+              className="w-full h-full object-contain hover:scale-105 transition-transform duration-500"
+              src={product?.images || "https://placehold.co/600"}
+              alt={product?.name}
             />
           </div>
 
@@ -137,7 +131,7 @@ const ProductDetails = () => {
                   Quantity
                 </span>
                 <div className="flex items-center border-2 border-stone-200 dark:border-stone-700 rounded-xl">
-                  <button 
+                  <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="p-3 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition-colors"
                   >
@@ -146,7 +140,7 @@ const ProductDetails = () => {
                   <span className="w-12 text-center font-bold text-stone-900 dark:text-white">
                     {quantity}
                   </span>
-                  <button 
+                  <button
                     onClick={() => setQuantity(q => q + 1)}
                     className="p-3 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition-colors"
                   >
@@ -155,12 +149,12 @@ const ProductDetails = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleAddToCart}
                 disabled={isAdding || product?.stock === 0}
                 className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-bold text-xl shadow-lg
-                  ${addSuccess 
-                    ? 'bg-green-600 dark:bg-green-500 text-white' 
+                  ${addSuccess
+                    ? 'bg-green-600 dark:bg-green-500 text-white'
                     : 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-white active:scale-[0.98]'
                   }
                   ${(isAdding || product?.stock === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}

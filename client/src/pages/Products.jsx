@@ -3,13 +3,14 @@ import { ShoppingCart, ChevronDown, Filter, Loader2, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
+import api from '../services/api';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filter States
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
@@ -18,11 +19,10 @@ const Products = () => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://localhost:3000/products');
-        if (!response.ok) throw new Error('Failed to fetch products');
-        const data = await response.json();
-        setProducts(data);
-        setFilteredProducts(data);
+        const response = await api.get('/products');
+        setProducts(response.data);
+        setFilteredProducts(response.data);
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -66,11 +66,10 @@ const Products = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeCategory === cat 
-                  ? 'bg-black dark:bg-white text-white dark:text-black' 
-                  : 'bg-zinc-100 dark:bg-stone-800 text-gray-600 dark:text-stone-300 hover:bg-zinc-200 dark:hover:bg-stone-700'
-                }`}
+                className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeCategory === cat
+                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                    : 'bg-zinc-100 dark:bg-stone-800 text-gray-600 dark:text-stone-300 hover:bg-zinc-200 dark:hover:bg-stone-700'
+                  }`}
               >
                 {cat}
               </button>
@@ -81,7 +80,7 @@ const Products = () => {
             <span className="text-sm text-gray-500 dark:text-stone-400 italic">
               {filteredProducts.length} Products Found
             </span>
-            <select 
+            <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-white dark:bg-stone-900 border border-gray-300 dark:border-stone-700 text-sm rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-stone-900 dark:text-stone-100"
@@ -107,8 +106,8 @@ const Products = () => {
           ) : error ? (
             <div className="text-center py-40">
               <p className="text-red-500 dark:text-red-400 text-xl mb-4">Error: {error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => window.location.reload()}
                 className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors"
               >
                 Retry
@@ -117,7 +116,7 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
               {filteredProducts.map((product) => (
-                <ProductCard 
+                <ProductCard
                   key={product._id}
                   id={product._id}
                   name={product.name}

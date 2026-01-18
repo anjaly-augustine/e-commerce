@@ -5,6 +5,7 @@ import CategoryCard from '../components/CategoryCard';
 import ProductCard from '../components/ProductCard';
 import Footer from '../components/Footer';
 import { ShoppingCart, ChevronDown, Star, Facebook, Instagram, Twitter, Linkedin, Youtube, ArrowRight, Loader2 } from 'lucide-react';
+import api from '../services/api';
 
 export default function HomePage() {
     const [products, setProducts] = useState([]);
@@ -38,20 +39,17 @@ export default function HomePage() {
         const fetchProducts = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch('http://localhost:3000/products');
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch product data');
-                }
-
-                const data = await response.json();
+                const { data } = await api.get('/products');
                 setProducts(data);
+
             } catch (err) {
-                setError(err.message);
+                setError('Failed to fetch product data');
             } finally {
                 setIsLoading(false);
             }
         };
+
 
         fetchProducts();
     }, []);
@@ -100,8 +98,8 @@ export default function HomePage() {
                     ) : error ? (
                         <div className="text-center py-20 text-red-500 dark:text-red-400">
                             <p>Error: {error}</p>
-                            <button 
-                                onClick={() => window.location.reload()} 
+                            <button
+                                onClick={() => window.location.reload()}
                                 className="mt-4 underline hover:text-red-600 dark:hover:text-red-300"
                             >
                                 Try again

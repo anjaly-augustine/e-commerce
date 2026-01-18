@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import api from '../services/api';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -12,23 +13,23 @@ const CartPage = () => {
 
   // 1. Fetch Cart from Backend
   const fetchCart = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('http://localhost:3000/cart', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch cart');
-      const data = await response.json();
+  try {
+    setIsLoading(true);
 
-      setCartItems(data.items || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const { data } = await api.get("/cart", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    setCartItems(data.items || []);
+  } catch (err) {
+    setError("Failed to fetch cart");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (token) {
@@ -41,35 +42,38 @@ const CartPage = () => {
 
   // 2. Update Quantity
   const updateQuantity = async (productId, delta) => {
-    try {
-      const response = await fetch('http://localhost:3000/cart', {
-        method: 'POST',
+  try {
+    await api.post(
+      "/cart",
+      { productId, quantity: delta },
+      {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ productId, quantity: delta })
-      });
-      if (response.ok) fetchCart();
-    } catch (err) {
-      console.error("Update failed", err);
-    }
-  };
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    fetchCart();
+  } catch (err) {
+    console.error("Update failed", err);
+  }
+};
+
+  
 
   // 3. Remove Item
   const removeItem = async (productId) => {
-    try {
-      const response = await fetch(`http://localhost:3000/cart/${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) fetchCart();
-    } catch (err) {
-      console.error("Remove failed", err);
-    }
-  };
+  try {
+    await api.delete(`/cart/${productId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    fetchCart();
+  } catch (err) {
+    console.error("Remove failed", err);
+  }
+};
+
 
   const subtotal = cartItems.reduce((acc, item) => {
     const price = item.productId?.price || 0;

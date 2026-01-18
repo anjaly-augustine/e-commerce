@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, MapPin, CreditCard, ShieldCheck, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import api from '../services/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -22,11 +23,14 @@ const Checkout = () => {
 
   const fetchCart = async () => {
     const token = localStorage.getItem('token');
+
     try {
-      const response = await fetch('http://localhost:3000/cart', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const { data } = await api.get('/cart', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
-      const data = await response.json();
+
       if (data.items?.length === 0) navigate('/shop');
       setCart(data);
     } catch (err) {
@@ -36,35 +40,33 @@ const Checkout = () => {
     }
   };
 
+
   const handleCheckout = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch('http://localhost:3000/orders/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ shippingDetails: shippingData })
-      });
+      await api.post(
+        '/orders/checkout',
+        { shippingDetails: shippingData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-      if (response.ok) {
-        setOrderComplete(true);
-        window.dispatchEvent(new Event('cartUpdated'));
-        setTimeout(() => navigate('/profile'), 3000);
-      } else {
-        const err = await response.json();
-        alert(err.message || "Checkout failed");
-      }
+      setOrderComplete(true);
+      window.dispatchEvent(new Event('cartUpdated'));
+      setTimeout(() => navigate('/profile'), 3000);
     } catch (error) {
-      alert("System error. Please try again.");
+      alert("Checkout failed. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
+
 
   if (isLoading) return (
     <div className="h-screen flex items-center justify-center bg-white dark:bg-[#0c0a09]">
@@ -104,20 +106,20 @@ const Checkout = () => {
               </div>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
-                  type="text" 
+                  type="text"
                   placeholder="Street Address"
                   className="md:col-span-2 p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-900 dark:focus:border-white transition-colors text-stone-900 dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500"
                   onChange={(e) => setShippingData({ ...shippingData, address: e.target.value })}
                   required
                 />
                 <input
-                  type="text" 
+                  type="text"
                   placeholder="City"
                   className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-900 dark:focus:border-white transition-colors text-stone-900 dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500"
                   onChange={(e) => setShippingData({ ...shippingData, city: e.target.value })}
                 />
                 <input
-                  type="text" 
+                  type="text"
                   placeholder="Zip Code"
                   className="p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl outline-none focus:border-stone-900 dark:focus:border-white transition-colors text-stone-900 dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500"
                   onChange={(e) => setShippingData({ ...shippingData, zipCode: e.target.value })}
