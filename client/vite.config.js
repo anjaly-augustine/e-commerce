@@ -6,8 +6,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   preview: {
-    host: true, // listen on 0.0.0.0
-    port: 4173, // optional, can keep default
-    allowedHosts: ['e-commerce-frontend-syni.onrender.com']
+    host: true, // expose to 0.0.0.0
+    port: 4173, // optional
+    allowedHosts: ['e-commerce-frontend-syni.onrender.com', 'localhost']
   }
 })
