@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, ChevronDown, Menu, X, LogOut, User, LayoutDashboard, Package, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext'; // Ensure this path is correct
+import api from '../services/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -20,36 +21,26 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const fetchUserData = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setUser(null);
-      return;
-    }
     try {
-      const response = await fetch('http://localhost:3000/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const result = await response.json();
-      if (response.ok) setUser(result.data);
+      const { data } = await api.get("/users/me");
+      setUser(data);
     } catch (err) {
       setUser(null);
+      localStorage.removeItem("token");
     }
   };
 
+
   const updateCartCount = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return setCartCount(0);
     try {
-      const response = await fetch('http://localhost:3000/cart', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const { data } = await api.get("/cart");
       const count = data.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
       setCartCount(count);
     } catch (err) {
       setCartCount(0);
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem('token');

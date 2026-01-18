@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Check } from 'lucide-react';
+import api from '../services/api'; // <-- use api.js
 
 const ProductCard = ({ id, name, color, price, image }) => {
   const [adding, setAdding] = useState(false);
@@ -20,29 +21,16 @@ const ProductCard = ({ id, name, color, price, image }) => {
 
     setAdding(true);
     try {
-      const response = await fetch('http://localhost:3000/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          productId: id, 
-          quantity: 1
-        }),
-      });
+      const { data } = await api.post('/cart', { productId: id, quantity: 1 });
 
-      if (response.ok) {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2000);
-        window.dispatchEvent(new Event('cartUpdated'));
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || "Failed to update cart");
-      }
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+
+      // Trigger cart update event globally
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (err) {
       console.error("Cart Error:", err);
-      alert("Server error. Please try again later.");
+      alert(err.response?.data?.message || "Failed to update cart");
     } finally {
       setAdding(false);
     }
